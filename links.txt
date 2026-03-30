@@ -1,0 +1,2 @@
+Marketplace: https://marketplace.visualstudio.com/items?itemName=Anilito1.voice-dictation
+GitHub:      https://github.com/Anilito1/voice-dictation

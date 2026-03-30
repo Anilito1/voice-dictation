@@ -2,7 +2,7 @@
   "name": "voice-dictation",
   "displayName": "Voice Dictation",
   "description": "Press a key, speak, text appears. Voice dictation for VS Code with any STT API.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "Anilito1",
   "license": "MIT",
   "repository": {
@@ -12,6 +12,7 @@
   "engines": {
     "vscode": "^1.80.0"
   },
+  "icon": "media/logo.png",
   "categories": ["Other"],
   "activationEvents": ["onStartupFinished"],
   "main": "./src/extension.js",
