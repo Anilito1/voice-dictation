@@ -67,7 +67,7 @@ cp .env.example .env
 Edit `.env` with your API key:
 
 ```
-GROQ_API_KEY=gsk_your_key_here
+API_KEY=your_api_key_here
 ```
 
 Run:
@@ -99,7 +99,7 @@ cp .env.example .env
 Edit `.env`:
 
 ```
-GROQ_API_KEY=gsk_your_key_here
+API_KEY=your_api_key_here
 ```
 
 ---

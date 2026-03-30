@@ -34,8 +34,8 @@ import pyautogui
 from groq import Groq
 
 # ── Config ──────────────────────────────────────────────
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-if not GROQ_API_KEY or GROQ_API_KEY == "COLLE_TA_CLE_ICI":
+API_KEY = os.getenv("API_KEY") or os.getenv("GROQ_API_KEY")
+if not API_KEY or API_KEY == "COLLE_TA_CLE_ICI":
     ctypes.windll.user32.MessageBoxW(
         0, "Mets ta cle API Groq dans .env", "Voice Dictation", 0x10
     )
@@ -47,7 +47,7 @@ MAX_DURATION = int(os.getenv("DICTATION_MAX_DURATION", "120"))
 SILENCE_THRESHOLD = float(os.getenv("DICTATION_SILENCE_THRESHOLD", "0.01"))
 SILENCE_DURATION = float(os.getenv("DICTATION_SILENCE_DURATION", "1.5"))
 
-client = Groq(api_key=GROQ_API_KEY, timeout=30.0)
+client = Groq(api_key=API_KEY, timeout=30.0)
 SAMPLE_RATE = 16000
 CHANNELS = 1
 BLOCK_SIZE = int(SAMPLE_RATE * 0.1)

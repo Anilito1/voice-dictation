@@ -387,7 +387,7 @@ function buildSidebarHtml(s) {
   (s.hasKey
     ? '<div class="api-line"><span class="adot"></span><span class="albl">Connected</span>' +
       '<button class="adel" onclick="confirmDel()" title="Remove key">&#x2715;</button></div>'
-    : '<label>Enter your API key</label><input type="password" id="apiKeyInput" placeholder="gsk_..." />' +
+    : '<label>Enter your API key</label><input type="password" id="apiKeyInput" placeholder="Your API key..." />' +
       '<button class="btn" onclick="saveKey()">Connect</button>'
   ) + '</div>' +
 
@@ -465,7 +465,7 @@ function buildSidebarHtml(s) {
   'function confirmDel(){document.getElementById("modal").classList.add("show");}' +
   'function closeDel(){document.getElementById("modal").classList.remove("show");}' +
   'function doRemove(){closeDel();vsc.postMessage({type:"removeApiKey"});' +
-  'document.getElementById("keySection").innerHTML=\'<label>Enter your API key</label><input type="password" id="apiKeyInput" placeholder="gsk_..." />' +
+  'document.getElementById("keySection").innerHTML=\'<label>Enter your API key</label><input type="password" id="apiKeyInput" placeholder="Your API key..." />' +
   '<button class="btn" onclick="saveKey()">Connect</button>\';toast("Key removed");}' +
 
   'function saveSettings(){vsc.postMessage({type:"saveSettings",language:document.getElementById("lang").value,' +

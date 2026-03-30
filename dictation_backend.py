@@ -46,15 +46,15 @@ def send_msg(msg):
 
 # ── Config ──────────────────────────────────────────────
 # API key can come from .env (standalone) or from the extension via stdin
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+API_KEY = os.getenv("API_KEY", "") or os.getenv("GROQ_API_KEY", "")
 client = None
 
 def init_client(key=None):
-    global client, GROQ_API_KEY
+    global client, API_KEY
     if key:
-        GROQ_API_KEY = key
-    if GROQ_API_KEY:
-        client = Groq(api_key=GROQ_API_KEY, timeout=30.0)
+        API_KEY = key
+    if API_KEY:
+        client = Groq(api_key=API_KEY, timeout=30.0)
 SAMPLE_RATE = 16000
 CHANNELS = 1
 BLOCK_SIZE = int(SAMPLE_RATE * 0.1)
