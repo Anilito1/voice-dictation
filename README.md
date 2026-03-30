@@ -2,35 +2,22 @@
 
 Personal project I built to dictate into VS Code and Claude Code without touching the keyboard. Publishing it for free so anyone can use it. Bring your own API key.
 
-## Install
+![Sidebar](https://raw.githubusercontent.com/Anilito1/voice-dictation/master/media/sidebar.png)
+![Status Bar](https://raw.githubusercontent.com/Anilito1/voice-dictation/master/media/statusbar.png)
 
-```bash
-git clone https://github.com/Anilito1/voice-dictation.git
-cd voice-dictation
-pip install groq sounddevice numpy keyboard pyperclip pyautogui python-dotenv
-```
+## How it works
 
-Link into VS Code:
+1. Press your hotkey
+2. Speak
+3. Text appears where your cursor is
 
-```cmd
-:: Windows (cmd as admin)
-mklink /J "%USERPROFILE%\.vscode\extensions\Anilito1.voice-dictation-1.0.0" "C:\path\to\voice-dictation"
-```
+## Features
 
-```bash
-# macOS / Linux
-ln -s /path/to/voice-dictation ~/.vscode/extensions/Anilito1.voice-dictation-1.0.0
-```
-
-Reload VS Code (`Ctrl+Shift+P` > `Reload Window`).
-
-## Setup
-
-Click the **mic icon** in the left sidebar:
-1. Paste your API key → **Connect**
-2. Click **Bind your shortcut** → press your key
-3. Pick your language
-4. Done
+- **Sidebar panel** — API key, shortcut binding, language, all settings in one place
+- **Status bar** — Red blinking REC, yellow spinner, green OK
+- **Auto-stop** — Detects silence and stops recording automatically
+- **Any shortcut** — Bind any key + Ctrl/Alt/Shift combo
+- **10 languages** — French, English, Spanish, German, Italian, Portuguese, Dutch, Japanese, Korean, Chinese
 
 ## Supported APIs
 
@@ -41,15 +28,15 @@ Click the **mic icon** in the left sidebar:
 | **[OpenAI](https://platform.openai.com)** | platform.openai.com |
 | **[AssemblyAI](https://www.assemblyai.com)** | assemblyai.com |
 
-To switch: edit `do_transcribe()` in `dictation_backend.py`.
+## Requirements
 
-## Standalone (no VS Code)
+- Python 3.10+ with: `groq sounddevice numpy keyboard pyperclip pyautogui python-dotenv`
+- A microphone
 
 ```bash
-cp .env.example .env   # edit with your key: API_KEY=...
-pythonw dictation.pyw
+pip install groq sounddevice numpy keyboard pyperclip pyautogui python-dotenv
 ```
 
 ## License
 
-MIT
+MIT — [GitHub](https://github.com/Anilito1/voice-dictation)

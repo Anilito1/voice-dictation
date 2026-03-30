@@ -1,8 +1,8 @@
 {
   "name": "voice-dictation",
   "displayName": "Voice Dictation",
-  "description": "Push-to-talk voice dictation. Press a key, speak, get text instantly.",
-  "version": "1.0.0",
+  "description": "Press a key, speak, text appears. Voice dictation for VS Code with any STT API.",
+  "version": "1.0.1",
   "publisher": "Anilito1",
   "license": "MIT",
   "repository": {
