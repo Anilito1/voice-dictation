@@ -1,6 +1,6 @@
 # Voice Dictation for VS Code
 
-Press a key, speak, text appears. Open source, plug your own API key.
+Personal project I built to dictate into VS Code and Claude Code without touching the keyboard. Publishing it for free so anyone can use it. Bring your own API key.
 
 ## Install
 
