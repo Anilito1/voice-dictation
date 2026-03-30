@@ -1,0 +1,7 @@
+.env
+dictation.log
+*.pyc
+__pycache__/
+node_modules/
+*.vsix
+.vscode/

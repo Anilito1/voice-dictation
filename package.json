@@ -1,0 +1,118 @@
+{
+  "name": "voice-dictation",
+  "displayName": "Voice Dictation",
+  "description": "Push-to-talk voice dictation. Press a key, speak, get text instantly.",
+  "version": "1.0.0",
+  "publisher": "Anilito1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Anilito1/voice-dictation"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "voiceDictation.toggle",
+        "title": "Voice Dictation: Toggle Recording",
+        "icon": "$(mic)"
+      },
+      {
+        "command": "voiceDictation.settings",
+        "title": "Voice Dictation: Settings"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "voiceDictation",
+          "title": "Voice Dictation",
+          "icon": "media/mic.svg"
+        }
+      ]
+    },
+    "views": {
+      "voiceDictation": [
+        {
+          "type": "webview",
+          "id": "voiceDictation.panel",
+          "name": "Voice Dictation"
+        }
+      ]
+    },
+    "keybindings": [],
+    "configuration": {
+      "title": "Voice Dictation",
+      "properties": {
+        "voiceDictation.language": {
+          "type": "string",
+          "default": "fr",
+          "enum": ["fr", "en", "es", "de", "it", "pt", "nl", "ja", "ko", "zh"],
+          "enumDescriptions": [
+            "Francais", "English", "Espanol", "Deutsch",
+            "Italiano", "Portugues", "Nederlands",
+            "Japanese", "Korean", "Chinese"
+          ],
+          "description": "Transcription language"
+        },
+        "voiceDictation.silenceDuration": {
+          "type": "number",
+          "default": 1.5,
+          "minimum": 0.5,
+          "maximum": 5,
+          "description": "Silence duration (seconds) before auto-stop"
+        },
+        "voiceDictation.maxDuration": {
+          "type": "number",
+          "default": 120,
+          "minimum": 5,
+          "maximum": 600,
+          "description": "Max recording duration (seconds)"
+        },
+        "voiceDictation.silenceThreshold": {
+          "type": "number",
+          "default": 0.01,
+          "description": "Silence threshold for VAD (0.001 - 0.1)"
+        },
+        "voiceDictation.pythonPath": {
+          "type": "string",
+          "default": "pythonw",
+          "description": "Path to Python executable"
+        },
+        "voiceDictation.hotkeyScancode": {
+          "type": "number",
+          "default": 41,
+          "description": "Hotkey scan code (41 = ² on AZERTY)"
+        },
+        "voiceDictation.hotkeyName": {
+          "type": "string",
+          "default": "\u00b2",
+          "description": "Display name of the hotkey"
+        },
+        "voiceDictation.hotkeyCtrl": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require Ctrl held with hotkey"
+        },
+        "voiceDictation.hotkeyAlt": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require Alt held with hotkey"
+        },
+        "voiceDictation.hotkeyShift": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require Shift held with hotkey"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "package": "vsce package"
+  }
+}

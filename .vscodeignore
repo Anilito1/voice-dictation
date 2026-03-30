@@ -1,0 +1,12 @@
+.env
+.env.example
+.git
+.gitignore
+dictation.log
+dictation.py
+dictation.pyw
+*.pyc
+__pycache__
+*.vsix
+README.md
+LICENSE
