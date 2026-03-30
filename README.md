@@ -30,12 +30,10 @@ Personal project I built to dictate into VS Code and Claude Code without touchin
 
 ## Requirements
 
-- Python 3.10+ with: `groq sounddevice numpy keyboard pyperclip pyautogui python-dotenv`
+- Python 3.10+
 - A microphone
 
-```bash
-pip install groq sounddevice numpy keyboard pyperclip pyautogui python-dotenv
-```
+Dependencies are installed automatically on first launch.
 
 ## License
 

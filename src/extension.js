@@ -142,7 +142,9 @@ function spawnBackend(extPath) {
     }
   });
 
+  let stderrBuf = "";
   backend.stderr.on("data", (data) => {
+    stderrBuf += data.toString("utf-8");
     console.error("[VoiceDictation]", data.toString("utf-8").trim());
   });
 
@@ -150,15 +152,55 @@ function spawnBackend(extPath) {
     console.error("[VoiceDictation] spawn error:", err.message);
     backend = null;
     setError("Python not found");
+    vscode.window.showErrorMessage(
+      "Voice Dictation: Python not found. Install Python 3.10+ and set the path in settings.",
+      "Open Settings"
+    ).then(choice => {
+      if (choice === "Open Settings") vscode.commands.executeCommand("workbench.action.openSettings", "voiceDictation.pythonPath");
+    });
   });
 
-  backend.on("close", () => {
+  backend.on("close", (code) => {
     backend = null;
+    if (stderrBuf.includes("ModuleNotFoundError") || stderrBuf.includes("No module named")) {
+      autoInstallDeps(extPath);
+      return;
+    }
     if (state !== "idle") setError("Backend stopped");
     if (sidebarProvider) sidebarProvider.updateStatus("disconnected");
   });
 
   sendFullConfig();
+}
+
+function autoInstallDeps(extPath) {
+  const reqFile = path.join(extPath, "requirements.txt");
+  vscode.window.showInformationMessage(
+    "Voice Dictation: Installing Python dependencies...",
+  );
+  if (sidebarProvider) sidebarProvider.updateStatus("disconnected");
+
+  const cfg = vscode.workspace.getConfiguration("voiceDictation");
+  // Use python (not pythonw) for pip install so it works
+  let py = cfg.get("pythonPath", "pythonw");
+  if (py === "pythonw") py = "python";
+  if (py === "pythonw3") py = "python3";
+  if (py.endsWith("pythonw.exe")) py = py.replace("pythonw.exe", "python.exe");
+
+  const terminal = vscode.window.createTerminal("Voice Dictation Setup");
+  terminal.show();
+  terminal.sendText(py + ' -m pip install -r "' + reqFile + '"');
+  terminal.sendText("echo.");
+  terminal.sendText('echo Dependencies installed. Reload VS Code: Ctrl+Shift+P > Reload Window');
+
+  vscode.window.showInformationMessage(
+    "Voice Dictation: Installing dependencies in terminal. Reload VS Code when done.",
+    "Reload Now"
+  ).then(choice => {
+    if (choice === "Reload Now") {
+      vscode.commands.executeCommand("workbench.action.reloadWindow");
+    }
+  });
 }
 
 function sendCommand(cmd) {
