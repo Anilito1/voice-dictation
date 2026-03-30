@@ -2,6 +2,8 @@
 
 Personal project I built to dictate into VS Code and Claude Code without touching the keyboard. Publishing it for free so anyone can use it. Bring your own API key.
 
+**[Install from VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=Anilito1.voice-dictation)**
+
 ![Sidebar](https://raw.githubusercontent.com/Anilito1/voice-dictation/master/media/sidebar.png)
 ![Status Bar](https://raw.githubusercontent.com/Anilito1/voice-dictation/master/media/statusbar.png)
 
