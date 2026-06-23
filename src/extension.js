@@ -122,7 +122,7 @@ function spawnBackend(extPath) {
   if (!apiKey) return;
 
   const cfg = vscode.workspace.getConfiguration("voiceDictation");
-  const pythonPath = cfg.get("pythonPath", "pythonw");
+  const pythonPath = cfg.get("pythonPath") || (process.platform === "win32" ? "pythonw" : "python3");
   const backendScript = path.join(extPath, "dictation_backend.py");
 
   backend = spawn(pythonPath, ["-u", backendScript], {
@@ -182,7 +182,7 @@ function autoInstallDeps(extPath) {
 
   const cfg = vscode.workspace.getConfiguration("voiceDictation");
   // Use python (not pythonw) for pip install so it works
-  let py = cfg.get("pythonPath", "pythonw");
+  let py = cfg.get("pythonPath") || (process.platform === "win32" ? "pythonw" : "python3");
   if (py === "pythonw") py = "python";
   if (py === "pythonw3") py = "python3";
   if (py.endsWith("pythonw.exe")) py = py.replace("pythonw.exe", "python.exe");
@@ -298,6 +298,7 @@ class SidebarProvider {
       silenceThreshold: cfg.get("silenceThreshold", 0.01),
       hasKey: !!apiKey,
       connected: !!(backend && !backend.killed),
+      isMac: process.platform === "darwin",
     };
     this._view.webview.html = buildSidebarHtml(s);
   }
@@ -437,14 +438,18 @@ function buildSidebarHtml(s) {
   '<div class="modal-row"><button class="mbtn-cancel" onclick="closeDel()">Cancel</button>' +
   '<button class="mbtn-del" onclick="doRemove()">Remove</button></div></div></div>' +
 
-  '<h2>Bind your shortcut</h2>' +
-  '<div class="key-btn" id="keyBtn"><div class="current" id="keyLabel">' + keyName + '</div>' +
-  '<div class="sub">Click to change</div></div>' +
-  '<div style="display:flex;gap:10px;margin-bottom:12px">' +
-    '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modCtrl"' + (s.hotkeyCtrl ? ' checked' : '') + ' onchange="saveMods()"> Ctrl</label>' +
-    '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modAlt"' + (s.hotkeyAlt ? ' checked' : '') + ' onchange="saveMods()"> Alt</label>' +
-    '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modShift"' + (s.hotkeyShift ? ' checked' : '') + ' onchange="saveMods()"> Shift</label>' +
-  '</div>' +
+  (s.isMac
+    ? '<h2>Shortcut</h2>' +
+      '<div class="desc">On macOS, bind a key in <b>Code &rsaquo; Settings &rsaquo; Keyboard Shortcuts</b> (search &quot;Voice Dictation: Toggle Recording&quot;). The global hotkey is Windows-only.</div>'
+    : '<h2>Bind your shortcut</h2>' +
+      '<div class="key-btn" id="keyBtn"><div class="current" id="keyLabel">' + keyName + '</div>' +
+      '<div class="sub">Click to change</div></div>' +
+      '<div style="display:flex;gap:10px;margin-bottom:12px">' +
+        '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modCtrl"' + (s.hotkeyCtrl ? ' checked' : '') + ' onchange="saveMods()"> Ctrl</label>' +
+        '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modAlt"' + (s.hotkeyAlt ? ' checked' : '') + ' onchange="saveMods()"> Alt</label>' +
+        '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modShift"' + (s.hotkeyShift ? ' checked' : '') + ' onchange="saveMods()"> Shift</label>' +
+      '</div>'
+  ) +
   '<input type="hidden" id="scancode" value="' + s.hotkeyScancode + '">' +
   '<input type="hidden" id="keyNameVal" value="' + (s.hotkeyName || keyName).replace(/"/g, '&quot;') + '">' +
 
@@ -467,7 +472,7 @@ function buildSidebarHtml(s) {
   'const vsc=acquireVsCodeApi();' +
 
   'const keyBtn=document.getElementById("keyBtn"),keyLabel=document.getElementById("keyLabel");' +
-  'keyBtn.addEventListener("click",()=>{keyBtn.classList.add("listening");keyLabel.textContent="Press any key...";vsc.postMessage({type:"captureKey"});});' +
+  'if(keyBtn){keyBtn.addEventListener("click",()=>{keyBtn.classList.add("listening");keyLabel.textContent="Press any key...";vsc.postMessage({type:"captureKey"});});}' +
 
   'window.addEventListener("message",e=>{const m=e.data;if(m.type!=="status")return;' +
   'const d=document.getElementById("dot"),t=document.getElementById("statusText"),b=document.getElementById("micBtn"),l=document.getElementById("micLabel");d.className="dot ";' +

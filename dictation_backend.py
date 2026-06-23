@@ -31,10 +31,19 @@ load_dotenv(os.path.join(_dir, ".env"))
 
 import sounddevice as sd
 import numpy as np
-import keyboard
 import pyperclip
 import pyautogui
 from groq import Groq
+
+# Global hotkey via the `keyboard` lib is Windows-only: on macOS/Linux it needs root
+# and key suppression is unsupported. On those platforms the toggle is driven by the
+# VS Code command over stdin instead. Paste shortcut also differs: macOS uses Cmd+V.
+IS_WINDOWS = sys.platform == "win32"
+if IS_WINDOWS:
+    import keyboard
+else:
+    keyboard = None
+PASTE_MODIFIER = "command" if sys.platform == "darwin" else "ctrl"
 
 # ── Helpers ─────────────────────────────────────────────
 
@@ -237,7 +246,7 @@ def do_transcribe():
                 old_clip = ""
             pyperclip.copy(text)
             time.sleep(0.05)
-            pyautogui.hotkey("ctrl", "v")
+            pyautogui.hotkey(PASTE_MODIFIER, "v")
             time.sleep(0.2)
             pyperclip.copy(old_clip)
             send_msg({"status": "done", "text": text})
@@ -353,7 +362,7 @@ def stdin_listener():
                         "hotkeyCtrl", "hotkeyAlt", "hotkeyShift"):
                 if key in cmd:
                     config[key] = cmd[key]
-            if config["hotkeyScancode"] != old_scancode:
+            if IS_WINDOWS and config["hotkeyScancode"] != old_scancode:
                 keyboard.unhook_all()
                 keyboard.hook(on_key, suppress=True)
         elif action == "capture_key":
@@ -371,7 +380,8 @@ def stdin_listener():
                     current_stream.close()
                 except Exception:
                     pass
-            keyboard.unhook_all()
+            if IS_WINDOWS:
+                keyboard.unhook_all()
             break
 
 
@@ -379,7 +389,8 @@ def stdin_listener():
 def main():
     init_client()
     send_msg({"status": "ready"})
-    keyboard.hook(on_key, suppress=True)
+    if IS_WINDOWS:
+        keyboard.hook(on_key, suppress=True)
     threading.Thread(target=stdin_listener, daemon=True).start()
 
     try:
@@ -389,7 +400,8 @@ def main():
         pass
     finally:
         recording_event.clear()
-        keyboard.unhook_all()
+        if IS_WINDOWS:
+            keyboard.unhook_all()
 
 
 if __name__ == "__main__":

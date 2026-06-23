@@ -82,8 +82,8 @@
         },
         "voiceDictation.pythonPath": {
           "type": "string",
-          "default": "pythonw",
-          "description": "Path to Python executable"
+          "default": "",
+          "description": "Path to Python executable. Leave empty to auto-detect (pythonw on Windows, python3 on macOS/Linux)."
         },
         "voiceDictation.hotkeyScancode": {
           "type": "number",

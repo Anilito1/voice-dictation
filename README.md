@@ -37,6 +37,22 @@ Personal project I built to dictate into VS Code and Claude Code without touchin
 
 Dependencies are installed automatically on first launch.
 
+## macOS
+
+The global hotkey (press a key from anywhere) is Windows-only. On macOS, dictation
+works inside VS Code:
+
+1. **Python** is auto-detected (`python3`). If yours lives elsewhere, set
+   `voiceDictation.pythonPath` (e.g. a venv: `/Users/you/.venv/bin/python`).
+2. **Bind a key**: open *Code › Settings › Keyboard Shortcuts*, search
+   *Voice Dictation: Toggle Recording*, and assign a key.
+3. **Grant Accessibility** to VS Code: *System Settings › Privacy & Security ›
+   Accessibility*. Without it, the transcription is produced but the Cmd+V paste
+   silently does nothing.
+
+Then: focus the editor (or integrated terminal), press your key, speak, press
+again to stop — text is pasted at the cursor.
+
 ## License
 
 MIT — [GitHub](https://github.com/Anilito1/voice-dictation)
