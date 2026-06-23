@@ -39,8 +39,10 @@ function activate(context) {
   // ── Commands ──────────────────────────────────────
   context.subscriptions.push(
     vscode.commands.registerCommand("voiceDictation.toggle", () => {
+      console.log("[VD] toggle invoked, state=" + state);
       if (state === "recording") sendCommand({ cmd: "stop" });
       else if (state === "idle") sendCommand({ cmd: "start" });
+      else console.log("[VD] toggle IGNORED — state is neither recording nor idle: " + state);
     }),
     vscode.commands.registerCommand("voiceDictation.settings", () => {
       vscode.commands.executeCommand("voiceDictation.panel.focus");
@@ -204,6 +206,7 @@ function autoInstallDeps(extPath) {
 }
 
 function sendCommand(cmd) {
+  console.log("[VD] sendCommand cmd=" + cmd.cmd + " | backendAlive=" + !!(backend && !backend.killed) + " apiKey=" + !!apiKey);
   if (!backend || backend.killed) {
     if (!apiKey) {
       vscode.window.showWarningMessage("Voice Dictation: Set your API key in the sidebar first.");
@@ -240,6 +243,7 @@ function sendFullConfig() {
 // ── Handle messages from backend ───────────────────────
 
 function handleMessage(msg) {
+  console.log("[VD] backend msg: " + JSON.stringify(msg));
   switch (msg.status) {
     case "ready":
       if (sidebarProvider) sidebarProvider.updateStatus("connected");
@@ -351,6 +355,8 @@ class SidebarProvider {
         sendFullConfig();
       } else if (msg.type === "toggle") {
         vscode.commands.executeCommand("voiceDictation.toggle");
+      } else if (msg.type === "openKeybindings") {
+        vscode.commands.executeCommand("workbench.action.openGlobalKeybindings", "Voice Dictation: Toggle Recording");
       }
     });
   }
@@ -440,7 +446,8 @@ function buildSidebarHtml(s) {
 
   (s.isMac
     ? '<h2>Shortcut</h2>' +
-      '<div class="desc">On macOS, bind a key in <b>Code &rsaquo; Settings &rsaquo; Keyboard Shortcuts</b> (search &quot;Voice Dictation: Toggle Recording&quot;). The global hotkey is Windows-only.</div>'
+      '<div class="desc">The global hotkey is Windows-only. On macOS, bind a key to the <b>Voice Dictation: Toggle Recording</b> command:</div>' +
+      '<button class="btn" onclick="openKeys()">Open Keyboard Shortcuts</button>'
     : '<h2>Bind your shortcut</h2>' +
       '<div class="key-btn" id="keyBtn"><div class="current" id="keyLabel">' + keyName + '</div>' +
       '<div class="sub">Click to change</div></div>' +
@@ -496,6 +503,7 @@ function buildSidebarHtml(s) {
   '}});' +
 
   'function toggle(){vsc.postMessage({type:"toggle"});}' +
+  'function openKeys(){vsc.postMessage({type:"openKeybindings"});}' +
 
   'function saveMods(){vsc.postMessage({type:"saveSettings",' +
   'hotkeyScancode:parseInt(document.getElementById("scancode").value),' +
