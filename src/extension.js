@@ -237,22 +237,6 @@ function sendFullConfig() {
   });
 }
 
-// ── Paste text at last active context ─────────────────
-
-async function pasteText(text) {
-  const editor = vscode.window.activeTextEditor;
-  if (editor) {
-    await editor.edit(eb => eb.insert(editor.selection.active, text));
-    return;
-  }
-  // Terminal, webview (Claude Code, etc.): clipboard + Cmd+V
-  await vscode.env.clipboard.writeText(text);
-  require('child_process').exec(
-    "osascript -e 'tell application \"System Events\" to keystroke \"v\" using command down'",
-    err => { if (err) vscode.window.showWarningMessage('Voice Dictation: grant Accessibility to VS Code in System Preferences → Privacy → Accessibility'); }
-  );
-}
-
 // ── Handle messages from backend ───────────────────────
 
 function handleMessage(msg) {
@@ -270,7 +254,6 @@ function handleMessage(msg) {
       break;
     case "done":
       setDone();
-      if (msg.text) pasteText(msg.text);
       if (sidebarProvider) sidebarProvider.updateStatus("done");
       break;
     case "error":
