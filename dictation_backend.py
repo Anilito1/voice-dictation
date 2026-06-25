@@ -31,8 +31,6 @@ load_dotenv(os.path.join(_dir, ".env"))
 
 import sounddevice as sd
 import numpy as np
-import pyperclip
-import pyautogui
 from groq import Groq
 
 # Global hotkey via the `keyboard` lib is Windows-only: on macOS/Linux it needs root
@@ -43,7 +41,6 @@ if IS_WINDOWS:
     import keyboard
 else:
     keyboard = None
-PASTE_MODIFIER = "command" if sys.platform == "darwin" else "ctrl"
 
 # ── Helpers ─────────────────────────────────────────────
 
@@ -240,15 +237,6 @@ def do_transcribe():
         text = result.text.strip()
 
         if text and not is_hallucination(text):
-            try:
-                old_clip = pyperclip.paste()
-            except Exception:
-                old_clip = ""
-            pyperclip.copy(text)
-            time.sleep(0.05)
-            pyautogui.hotkey(PASTE_MODIFIER, "v")
-            time.sleep(0.2)
-            pyperclip.copy(old_clip)
             send_msg({"status": "done", "text": text})
         else:
             send_msg({"status": "skip"})

@@ -8,6 +8,7 @@ let blinkTimer = null;
 let state = "idle";
 let sidebarProvider = null;
 let apiKey = "";
+let lastActiveContext = "editor";
 
 // ── Storage helpers (globalState is reliable, secrets are not with junctions) ──
 function loadApiKey(context) {
@@ -22,6 +23,12 @@ async function deleteApiKey(context) {
 
 function activate(context) {
   const extPath = context.extensionPath;
+
+  // ── Track last active context (editor vs terminal) ──
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(e => { if (e) lastActiveContext = "editor"; }),
+    vscode.window.onDidChangeActiveTerminal(e => { if (e) lastActiveContext = "terminal"; })
+  );
 
   // ── Status bar ────────────────────────────────────
   statusBar = vscode.window.createStatusBarItem(
@@ -240,6 +247,24 @@ function sendFullConfig() {
   });
 }
 
+// ── Paste text at last active context ─────────────────
+
+async function pasteText(text) {
+  if (lastActiveContext === "terminal") {
+    const terminal = vscode.window.activeTerminal;
+    if (terminal) { terminal.sendText(text, false); return; }
+  }
+  const editor = vscode.window.activeTextEditor;
+  if (editor) {
+    await editor.edit(eb => eb.insert(editor.selection.active, text));
+    return;
+  }
+  const terminal = vscode.window.activeTerminal;
+  if (terminal) { terminal.sendText(text, false); return; }
+  await vscode.env.clipboard.writeText(text);
+  vscode.window.showInformationMessage("Voice Dictation: texte copié dans le presse-papier");
+}
+
 // ── Handle messages from backend ───────────────────────
 
 function handleMessage(msg) {
@@ -258,7 +283,8 @@ function handleMessage(msg) {
       break;
     case "done":
       setDone();
-      if (sidebarProvider) sidebarProvider.updateStatus("done", msg.text);
+      if (msg.text) pasteText(msg.text);
+      if (sidebarProvider) sidebarProvider.updateStatus("done");
       break;
     case "error":
       setError(msg.msg);
@@ -445,9 +471,8 @@ function buildSidebarHtml(s) {
   '<button class="mbtn-del" onclick="doRemove()">Remove</button></div></div></div>' +
 
   (s.isMac
-    ? '<h2>Shortcut</h2>' +
-      '<div class="desc">The global hotkey is Windows-only. On macOS, bind a key to the <b>Voice Dictation: Toggle Recording</b> command:</div>' +
-      '<button class="btn" onclick="openKeys()">Open Keyboard Shortcuts</button>'
+    ? '<h2>Keyboard Shortcut</h2>' +
+      '<button class="btn" onclick="openKeys()">Bind keyboard shortcut</button>'
     : '<h2>Bind your shortcut</h2>' +
       '<div class="key-btn" id="keyBtn"><div class="current" id="keyLabel">' + keyName + '</div>' +
       '<div class="sub">Click to change</div></div>' +
@@ -489,7 +514,7 @@ function buildSidebarHtml(s) {
   'case"connecting":d.classList.add("off");t.textContent="Connecting...";break;' +
   'case"recording":d.classList.add("rec");t.textContent="Recording...";b.className="mic-btn rec";l.textContent="Click to stop";break;' +
   'case"processing":d.classList.add("proc");t.textContent="Transcribing...";b.className="mic-btn";l.textContent="Transcribing...";break;' +
-  'case"done":d.classList.add("on");t.textContent=(m.detail||"").substring(0,40);b.className="mic-btn";l.textContent="Press to record";break;' +
+  'case"done":d.classList.add("on");t.textContent="Done!";b.className="mic-btn";l.textContent="Press to record";break;' +
   'case"error":d.classList.add("off");t.textContent="Error";b.className="mic-btn";l.textContent="Press to record";break;' +
   'case"capturing":break;' +
   'case"key_captured":try{var kd=JSON.parse(m.detail);document.getElementById("scancode").value=kd.scancode;' +
