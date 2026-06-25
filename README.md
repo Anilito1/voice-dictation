@@ -18,7 +18,7 @@ Personal project I built to dictate into VS Code and Claude Code without touchin
 - **Sidebar panel** — API key, shortcut binding, language, all settings in one place
 - **Status bar** — Red blinking REC, yellow spinner, green OK
 - **Auto-stop** — Detects silence and stops recording automatically
-- **Any shortcut** — Bind any key + Ctrl/Alt/Shift combo
+- **Any shortcut** — Bind any key + Cmd/Ctrl/Alt/Shift combo, works from anywhere (Windows & macOS)
 - **10 languages** — French, English, Spanish, German, Italian, Portuguese, Dutch, Japanese, Korean, Chinese
 
 ## Supported APIs
@@ -39,19 +39,25 @@ Dependencies are installed automatically on first launch.
 
 ## macOS
 
-The global hotkey (press a key from anywhere) is Windows-only. On macOS, dictation
-works inside VS Code:
+macOS now has the same global hotkey as Windows — press your key from anywhere
+(editor, integrated terminal, Claude Code, any panel) and the text is pasted
+where your cursor is.
 
 1. **Python** is auto-detected (`python3`). If yours lives elsewhere, set
    `voiceDictation.pythonPath` (e.g. a venv: `/Users/you/.venv/bin/python`).
-2. **Bind a key**: open *Code › Settings › Keyboard Shortcuts*, search
-   *Voice Dictation: Toggle Recording*, and assign a key.
+2. **Bind a key** in the sidebar: click the shortcut button, press your key, and
+   tick **Cmd** (recommended — so the hotkey itself types nothing).
 3. **Grant Accessibility** to VS Code: *System Settings › Privacy & Security ›
    Accessibility*. Without it, the transcription is produced but the Cmd+V paste
    silently does nothing.
 
-Then: focus the editor (or integrated terminal), press your key, speak, press
-again to stop — text is pasted at the cursor.
+Then: put your cursor anywhere, press your hotkey, speak, and press again to stop
+(or let it auto-stop on silence) — text appears at the cursor.
+
+> Bind the key in the sidebar, **not** in VS Code's Keyboard Shortcuts — a VS Code
+> keybinding can't fire when a terminal or webview has focus, and binding both
+> would double-trigger. If the hotkey still doesn't fire, also grant *Input
+> Monitoring* to VS Code in the same Privacy & Security settings.
 
 ## License
 
