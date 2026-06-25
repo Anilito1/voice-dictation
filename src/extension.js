@@ -8,7 +8,6 @@ let blinkTimer = null;
 let state = "idle";
 let sidebarProvider = null;
 let apiKey = "";
-let lastActiveContext = "editor";
 
 // ── Storage helpers (globalState is reliable, secrets are not with junctions) ──
 function loadApiKey(context) {
@@ -23,12 +22,6 @@ async function deleteApiKey(context) {
 
 function activate(context) {
   const extPath = context.extensionPath;
-
-  // ── Track last active context (editor vs terminal) ──
-  context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(e => { if (e) lastActiveContext = "editor"; }),
-    vscode.window.onDidChangeActiveTerminal(e => { if (e) lastActiveContext = "terminal"; })
-  );
 
   // ── Status bar ────────────────────────────────────
   statusBar = vscode.window.createStatusBarItem(
@@ -247,19 +240,17 @@ function sendFullConfig() {
 // ── Paste text at last active context ─────────────────
 
 async function pasteText(text) {
-  if (lastActiveContext === "terminal") {
-    const terminal = vscode.window.activeTerminal;
-    if (terminal) { terminal.sendText(text, false); return; }
-  }
   const editor = vscode.window.activeTextEditor;
   if (editor) {
     await editor.edit(eb => eb.insert(editor.selection.active, text));
     return;
   }
-  const terminal = vscode.window.activeTerminal;
-  if (terminal) { terminal.sendText(text, false); return; }
+  // Terminal, webview (Claude Code, etc.): clipboard + Cmd+V
   await vscode.env.clipboard.writeText(text);
-  vscode.window.showInformationMessage("Voice Dictation: texte copié dans le presse-papier");
+  require('child_process').exec(
+    "osascript -e 'tell application \"System Events\" to keystroke \"v\" using command down'",
+    err => { if (err) vscode.window.showWarningMessage('Voice Dictation: grant Accessibility to VS Code in System Preferences → Privacy → Accessibility'); }
+  );
 }
 
 // ── Handle messages from backend ───────────────────────
