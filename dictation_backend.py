@@ -35,15 +35,62 @@ import pyperclip
 import pyautogui
 from groq import Groq
 
-# Global hotkey via the `keyboard` lib is Windows-only: on macOS/Linux it needs root
-# and key suppression is unsupported. On those platforms the toggle is driven by the
-# VS Code command over stdin instead. Paste shortcut also differs: macOS uses Cmd+V.
+# Global hotkey fires regardless of which app/panel has focus (terminal, webview,
+# editor) — a VS Code keybinding can't, it's swallowed by focused terminals/webviews.
+# Windows uses the `keyboard` lib; macOS/Linux use pynput. Both trigger toggle() then
+# pyautogui pastes into whatever has focus. Paste shortcut differs: macOS uses Cmd+V.
 IS_WINDOWS = sys.platform == "win32"
 if IS_WINDOWS:
     import keyboard
+    pynput_kb = None
 else:
     keyboard = None
+    from pynput import keyboard as pynput_kb
 PASTE_MODIFIER = "command" if sys.platform == "darwin" else "ctrl"
+
+# pynput hotkey state (non-Windows)
+_held_mods = set()
+_pynput_listener = None
+
+def _mod_type(key):
+    if not pynput_kb:
+        return None
+    if key in (pynput_kb.Key.ctrl, pynput_kb.Key.ctrl_l, pynput_kb.Key.ctrl_r): return "ctrl"
+    if key in (pynput_kb.Key.alt, pynput_kb.Key.alt_l, pynput_kb.Key.alt_r): return "alt"
+    if key in (pynput_kb.Key.shift, pynput_kb.Key.shift_l, pynput_kb.Key.shift_r): return "shift"
+    if key in (pynput_kb.Key.cmd, pynput_kb.Key.cmd_l, pynput_kb.Key.cmd_r): return "cmd"
+    return None
+
+def _mods_match():
+    if config.get("hotkeyCtrl") and "ctrl" not in _held_mods: return False
+    if config.get("hotkeyAlt") and "alt" not in _held_mods: return False
+    if config.get("hotkeyShift") and "shift" not in _held_mods: return False
+    if config.get("hotkeyCmd") and "cmd" not in _held_mods: return False
+    return True
+
+def _pynput_on_press(key):
+    # ponytail: no key suppression — rely on a modifier (e.g. Cmd) so the hotkey
+    # produces no text. Add darwin_intercept suppression if a bare key is needed.
+    global capture_mode
+    mod = _mod_type(key)
+    if mod:
+        _held_mods.add(mod)
+        return
+    vk = getattr(key, "vk", None)
+    if capture_mode:
+        capture_mode = False
+        char = getattr(key, "char", None)
+        name = (char.upper() if char and char.isprintable() else
+                str(key).replace("Key.", "").replace("'", "").upper())
+        send_msg({"status": "key_captured", "scancode": vk or 0, "name": name})
+        return
+    if vk is not None and vk == config["hotkeyScancode"] and _mods_match():
+        toggle()
+
+def _pynput_on_release(key):
+    mod = _mod_type(key)
+    if mod:
+        _held_mods.discard(mod)
 
 # ── Helpers ─────────────────────────────────────────────
 
@@ -359,7 +406,7 @@ def stdin_listener():
                 init_client(cmd["apiKey"])
             for key in ("language", "silenceDuration", "maxDuration",
                         "silenceThreshold", "hotkeyScancode",
-                        "hotkeyCtrl", "hotkeyAlt", "hotkeyShift"):
+                        "hotkeyCtrl", "hotkeyAlt", "hotkeyShift", "hotkeyCmd"):
                 if key in cmd:
                     config[key] = cmd[key]
             if IS_WINDOWS and config["hotkeyScancode"] != old_scancode:
@@ -382,15 +429,24 @@ def stdin_listener():
                     pass
             if IS_WINDOWS:
                 keyboard.unhook_all()
+            elif _pynput_listener:
+                _pynput_listener.stop()
             break
 
 
 # ── Main ────────────────────────────────────────────────
 def main():
+    global _pynput_listener
     init_client()
     send_msg({"status": "ready"})
     if IS_WINDOWS:
         keyboard.hook(on_key, suppress=True)
+    else:
+        _pynput_listener = pynput_kb.Listener(
+            on_press=_pynput_on_press, on_release=_pynput_on_release
+        )
+        _pynput_listener.daemon = True
+        _pynput_listener.start()
     threading.Thread(target=stdin_listener, daemon=True).start()
 
     try:
@@ -402,6 +458,8 @@ def main():
         recording_event.clear()
         if IS_WINDOWS:
             keyboard.unhook_all()
+        elif _pynput_listener:
+            _pynput_listener.stop()
 
 
 if __name__ == "__main__":

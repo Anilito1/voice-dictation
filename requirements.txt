@@ -2,6 +2,7 @@ groq
 sounddevice
 numpy
 keyboard
+pynput
 pyperclip
 pyautogui
 python-dotenv

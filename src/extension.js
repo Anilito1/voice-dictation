@@ -234,6 +234,7 @@ function sendFullConfig() {
     hotkeyCtrl: cfg.get("hotkeyCtrl", false),
     hotkeyAlt: cfg.get("hotkeyAlt", false),
     hotkeyShift: cfg.get("hotkeyShift", false),
+    hotkeyCmd: cfg.get("hotkeyCmd", false),
   });
 }
 
@@ -293,6 +294,7 @@ class SidebarProvider {
       hotkeyCtrl: cfg.get("hotkeyCtrl", false),
       hotkeyAlt: cfg.get("hotkeyAlt", false),
       hotkeyShift: cfg.get("hotkeyShift", false),
+      hotkeyCmd: cfg.get("hotkeyCmd", false),
       silenceDuration: cfg.get("silenceDuration", 1.5),
       maxDuration: cfg.get("maxDuration", 120),
       silenceThreshold: cfg.get("silenceThreshold", 0.01),
@@ -345,14 +347,13 @@ class SidebarProvider {
         if (msg.hotkeyCtrl !== undefined) await c.update("hotkeyCtrl", msg.hotkeyCtrl, vscode.ConfigurationTarget.Global);
         if (msg.hotkeyAlt !== undefined) await c.update("hotkeyAlt", msg.hotkeyAlt, vscode.ConfigurationTarget.Global);
         if (msg.hotkeyShift !== undefined) await c.update("hotkeyShift", msg.hotkeyShift, vscode.ConfigurationTarget.Global);
+        if (msg.hotkeyCmd !== undefined) await c.update("hotkeyCmd", msg.hotkeyCmd, vscode.ConfigurationTarget.Global);
         if (msg.silenceDuration !== undefined) await c.update("silenceDuration", msg.silenceDuration, vscode.ConfigurationTarget.Global);
         if (msg.maxDuration !== undefined) await c.update("maxDuration", msg.maxDuration, vscode.ConfigurationTarget.Global);
         if (msg.silenceThreshold !== undefined) await c.update("silenceThreshold", msg.silenceThreshold, vscode.ConfigurationTarget.Global);
         sendFullConfig();
       } else if (msg.type === "toggle") {
         vscode.commands.executeCommand("voiceDictation.toggle");
-      } else if (msg.type === "openKeybindings") {
-        vscode.commands.executeCommand("workbench.action.openGlobalKeybindings", "Voice Dictation: Toggle Recording");
       }
     });
   }
@@ -440,18 +441,15 @@ function buildSidebarHtml(s) {
   '<div class="modal-row"><button class="mbtn-cancel" onclick="closeDel()">Cancel</button>' +
   '<button class="mbtn-del" onclick="doRemove()">Remove</button></div></div></div>' +
 
-  (s.isMac
-    ? '<h2>Keyboard Shortcut</h2>' +
-      '<button class="btn" onclick="openKeys()">Bind keyboard shortcut</button>'
-    : '<h2>Bind your shortcut</h2>' +
-      '<div class="key-btn" id="keyBtn"><div class="current" id="keyLabel">' + keyName + '</div>' +
-      '<div class="sub">Click to change</div></div>' +
-      '<div style="display:flex;gap:10px;margin-bottom:12px">' +
-        '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modCtrl"' + (s.hotkeyCtrl ? ' checked' : '') + ' onchange="saveMods()"> Ctrl</label>' +
-        '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modAlt"' + (s.hotkeyAlt ? ' checked' : '') + ' onchange="saveMods()"> Alt</label>' +
-        '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modShift"' + (s.hotkeyShift ? ' checked' : '') + ' onchange="saveMods()"> Shift</label>' +
-      '</div>'
-  ) +
+  '<h2>Bind your shortcut</h2>' +
+  '<div class="key-btn" id="keyBtn"><div class="current" id="keyLabel">' + keyName + '</div>' +
+  '<div class="sub">Click to change</div></div>' +
+  '<div style="display:flex;gap:10px;margin-bottom:12px">' +
+    (s.isMac ? '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modCmd"' + (s.hotkeyCmd ? ' checked' : '') + ' onchange="saveMods()"> Cmd</label>' : '') +
+    '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modCtrl"' + (s.hotkeyCtrl ? ' checked' : '') + ' onchange="saveMods()"> Ctrl</label>' +
+    '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modAlt"' + (s.hotkeyAlt ? ' checked' : '') + ' onchange="saveMods()"> Alt</label>' +
+    '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modShift"' + (s.hotkeyShift ? ' checked' : '') + ' onchange="saveMods()"> Shift</label>' +
+  '</div>' +
   '<input type="hidden" id="scancode" value="' + s.hotkeyScancode + '">' +
   '<input type="hidden" id="keyNameVal" value="' + (s.hotkeyName || keyName).replace(/"/g, '&quot;') + '">' +
 
@@ -490,7 +488,9 @@ function buildSidebarHtml(s) {
   'case"key_captured":try{var kd=JSON.parse(m.detail);document.getElementById("scancode").value=kd.scancode;' +
   'document.getElementById("keyNameVal").value=kd.name;document.getElementById("keyLabel").textContent=kd.name;' +
   'document.getElementById("keyBtn").classList.remove("listening");' +
+  'var cmdEl=document.getElementById("modCmd");' +
   'vsc.postMessage({type:"saveSettings",hotkeyScancode:kd.scancode,hotkeyName:kd.name,' +
+  'hotkeyCmd:cmdEl?cmdEl.checked:false,' +
   'hotkeyCtrl:document.getElementById("modCtrl").checked,' +
   'hotkeyAlt:document.getElementById("modAlt").checked,' +
   'hotkeyShift:document.getElementById("modShift").checked});' +
@@ -498,11 +498,11 @@ function buildSidebarHtml(s) {
   '}});' +
 
   'function toggle(){vsc.postMessage({type:"toggle"});}' +
-  'function openKeys(){vsc.postMessage({type:"openKeybindings"});}' +
 
-  'function saveMods(){vsc.postMessage({type:"saveSettings",' +
+  'function saveMods(){var cmdEl=document.getElementById("modCmd");vsc.postMessage({type:"saveSettings",' +
   'hotkeyScancode:parseInt(document.getElementById("scancode").value),' +
   'hotkeyName:document.getElementById("keyNameVal").value,' +
+  'hotkeyCmd:cmdEl?cmdEl.checked:false,' +
   'hotkeyCtrl:document.getElementById("modCtrl").checked,' +
   'hotkeyAlt:document.getElementById("modAlt").checked,' +
   'hotkeyShift:document.getElementById("modShift").checked});toast("Saved!");}' +

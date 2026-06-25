@@ -109,6 +109,11 @@
           "type": "boolean",
           "default": false,
           "description": "Require Shift held with hotkey"
+        },
+        "voiceDictation.hotkeyCmd": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require Cmd held with hotkey (macOS only)"
         }
       }
     }
