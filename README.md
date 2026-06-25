@@ -37,27 +37,23 @@ Personal project I built to dictate into VS Code and Claude Code without touchin
 
 Dependencies are installed automatically on first launch.
 
-## macOS
+## macOS is here! 🎉
 
-macOS now has the same global hotkey as Windows — press your key from anywhere
-(editor, integrated terminal, Claude Code, any panel) and the text is pasted
-where your cursor is.
+Voice Dictation now works fully on Mac — press your shortcut anywhere (a file,
+the terminal, Claude Code…) and your words appear right where your cursor is.
 
-1. **Python** is auto-detected (`python3`). If yours lives elsewhere, set
-   `voiceDictation.pythonPath` (e.g. a venv: `/Users/you/.venv/bin/python`).
-2. **Bind a key** in the sidebar: click the shortcut button, press your key, and
-   tick **Cmd** (recommended — so the hotkey itself types nothing).
-3. **Grant Accessibility** to VS Code: *System Settings › Privacy & Security ›
-   Accessibility*. Without it, the transcription is produced but the Cmd+V paste
-   silently does nothing.
+**3 steps to start:**
 
-Then: put your cursor anywhere, press your hotkey, speak, and press again to stop
-(or let it auto-stop on silence) — text appears at the cursor.
+1. **Add your API key** in the Voice Dictation sidebar.
+2. **Pick your shortcut** — click the key button in the sidebar, press the key
+   you want, and tick **Cmd**.
+3. **Allow VS Code once** — open *System Settings › Privacy & Security ›
+   Accessibility* and turn on **Visual Studio Code**. This lets it type for you.
 
-> Bind the key in the sidebar, **not** in VS Code's Keyboard Shortcuts — a VS Code
-> keybinding can't fire when a terminal or webview has focus, and binding both
-> would double-trigger. If the hotkey still doesn't fire, also grant *Input
-> Monitoring* to VS Code in the same Privacy & Security settings.
+That's it! Press your shortcut, talk, then pause — your text appears. Press again
+to stop early.
+
+*Nothing happens? Double-check step 3 — Accessibility has to be on for VS Code.*
 
 ## License
 
