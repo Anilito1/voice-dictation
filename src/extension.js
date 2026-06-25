@@ -46,10 +46,8 @@ function activate(context) {
   // ── Commands ──────────────────────────────────────
   context.subscriptions.push(
     vscode.commands.registerCommand("voiceDictation.toggle", () => {
-      console.log("[VD] toggle invoked, state=" + state);
       if (state === "recording") sendCommand({ cmd: "stop" });
       else if (state === "idle") sendCommand({ cmd: "start" });
-      else console.log("[VD] toggle IGNORED — state is neither recording nor idle: " + state);
     }),
     vscode.commands.registerCommand("voiceDictation.settings", () => {
       vscode.commands.executeCommand("voiceDictation.panel.focus");
@@ -213,7 +211,6 @@ function autoInstallDeps(extPath) {
 }
 
 function sendCommand(cmd) {
-  console.log("[VD] sendCommand cmd=" + cmd.cmd + " | backendAlive=" + !!(backend && !backend.killed) + " apiKey=" + !!apiKey);
   if (!backend || backend.killed) {
     if (!apiKey) {
       vscode.window.showWarningMessage("Voice Dictation: Set your API key in the sidebar first.");
@@ -268,7 +265,6 @@ async function pasteText(text) {
 // ── Handle messages from backend ───────────────────────
 
 function handleMessage(msg) {
-  console.log("[VD] backend msg: " + JSON.stringify(msg));
   switch (msg.status) {
     case "ready":
       if (sidebarProvider) sidebarProvider.updateStatus("connected");
@@ -487,7 +483,7 @@ function buildSidebarHtml(s) {
 
   '<h2>Language</h2>' +
   '<select id="lang" onchange="saveSettings()">' +
-  buildOptions([["fr","Fran\u00e7ais"],["en","English"],["es","Espa\u00f1ol"],["de","Deutsch"],["it","Italiano"],["pt","Portugu\u00eas"],["nl","Nederlands"],["ja","Japanese"],["ko","Korean"],["zh","Chinese"]], s.language) +
+  [["fr","Fran\u00e7ais"],["en","English"],["es","Espa\u00f1ol"],["de","Deutsch"],["it","Italiano"],["pt","Portugu\u00eas"],["nl","Nederlands"],["ja","Japanese"],["ko","Korean"],["zh","Chinese"]].map(([v,l])=>'<option value="'+v+'"'+(v===s.language?' selected':'')+'>'+l+'</option>').join('') +
   '</select>' +
 
   '<h2>Voice Detection</h2>' +
@@ -558,10 +554,6 @@ function buildSidebarHtml(s) {
   'function updST(){document.getElementById("stv").textContent=parseFloat(document.getElementById("st").value).toFixed(3);}' +
   'function toast(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1500);}' +
   '</script></body></html>';
-}
-
-function buildOptions(opts, selected) {
-  return opts.map(([v, l]) => '<option value="' + v + '"' + (v === selected ? ' selected' : '') + '>' + l + '</option>').join('');
 }
 
 function deactivate() {
