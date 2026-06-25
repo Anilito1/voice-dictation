@@ -15,11 +15,11 @@ Personal project I built to dictate into VS Code and Claude Code without touchin
 
 ## Features
 
-- **Sidebar panel** — API key, shortcut binding, language, all settings in one place
-- **Status bar** — Red blinking REC, yellow spinner, green OK
-- **Auto-stop** — Detects silence and stops recording automatically
-- **Any shortcut** — Bind any key + Ctrl/Alt/Shift combo
-- **10 languages** — French, English, Spanish, German, Italian, Portuguese, Dutch, Japanese, Korean, Chinese
+- **Sidebar panel** : API key, shortcut binding, language, all settings in one place
+- **Status bar** : Red blinking REC, yellow spinner, green OK
+- **Auto-stop** : Detects silence and stops recording automatically
+- **Any shortcut** : Bind any key + Cmd/Ctrl/Alt/Shift combo, works from anywhere (Windows & macOS)
+- **10 languages** : French, English, Spanish, German, Italian, Portuguese, Dutch, Japanese, Korean, Chinese
 
 ## Supported APIs
 
@@ -36,6 +36,17 @@ Personal project I built to dictate into VS Code and Claude Code without touchin
 - A microphone
 
 Dependencies are installed automatically on first launch.
+
+## macOS is here! 
+
+Voice Dictation now works fully on Mac press your shortcut anywhere (a file,
+the terminal, Claude Code…) and your words appear right where your cursor is.
+
+**current problem:**
+
+**Allow VS Code once** : open *System Settings › Privacy & Security ›
+   Accessibility* and turn on **Visual Studio Code**. This lets it type for you.
+
 
 ## License
 

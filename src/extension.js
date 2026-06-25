@@ -122,7 +122,7 @@ function spawnBackend(extPath) {
   if (!apiKey) return;
 
   const cfg = vscode.workspace.getConfiguration("voiceDictation");
-  const pythonPath = cfg.get("pythonPath", "pythonw");
+  const pythonPath = cfg.get("pythonPath") || (process.platform === "win32" ? "pythonw" : "python3");
   const backendScript = path.join(extPath, "dictation_backend.py");
 
   backend = spawn(pythonPath, ["-u", backendScript], {
@@ -182,7 +182,7 @@ function autoInstallDeps(extPath) {
 
   const cfg = vscode.workspace.getConfiguration("voiceDictation");
   // Use python (not pythonw) for pip install so it works
-  let py = cfg.get("pythonPath", "pythonw");
+  let py = cfg.get("pythonPath") || (process.platform === "win32" ? "pythonw" : "python3");
   if (py === "pythonw") py = "python";
   if (py === "pythonw3") py = "python3";
   if (py.endsWith("pythonw.exe")) py = py.replace("pythonw.exe", "python.exe");
@@ -234,6 +234,7 @@ function sendFullConfig() {
     hotkeyCtrl: cfg.get("hotkeyCtrl", false),
     hotkeyAlt: cfg.get("hotkeyAlt", false),
     hotkeyShift: cfg.get("hotkeyShift", false),
+    hotkeyCmd: cfg.get("hotkeyCmd", false),
   });
 }
 
@@ -254,7 +255,7 @@ function handleMessage(msg) {
       break;
     case "done":
       setDone();
-      if (sidebarProvider) sidebarProvider.updateStatus("done", msg.text);
+      if (sidebarProvider) sidebarProvider.updateStatus("done");
       break;
     case "error":
       setError(msg.msg);
@@ -293,11 +294,13 @@ class SidebarProvider {
       hotkeyCtrl: cfg.get("hotkeyCtrl", false),
       hotkeyAlt: cfg.get("hotkeyAlt", false),
       hotkeyShift: cfg.get("hotkeyShift", false),
+      hotkeyCmd: cfg.get("hotkeyCmd", false),
       silenceDuration: cfg.get("silenceDuration", 1.5),
       maxDuration: cfg.get("maxDuration", 120),
       silenceThreshold: cfg.get("silenceThreshold", 0.01),
       hasKey: !!apiKey,
       connected: !!(backend && !backend.killed),
+      isMac: process.platform === "darwin",
     };
     this._view.webview.html = buildSidebarHtml(s);
   }
@@ -344,6 +347,7 @@ class SidebarProvider {
         if (msg.hotkeyCtrl !== undefined) await c.update("hotkeyCtrl", msg.hotkeyCtrl, vscode.ConfigurationTarget.Global);
         if (msg.hotkeyAlt !== undefined) await c.update("hotkeyAlt", msg.hotkeyAlt, vscode.ConfigurationTarget.Global);
         if (msg.hotkeyShift !== undefined) await c.update("hotkeyShift", msg.hotkeyShift, vscode.ConfigurationTarget.Global);
+        if (msg.hotkeyCmd !== undefined) await c.update("hotkeyCmd", msg.hotkeyCmd, vscode.ConfigurationTarget.Global);
         if (msg.silenceDuration !== undefined) await c.update("silenceDuration", msg.silenceDuration, vscode.ConfigurationTarget.Global);
         if (msg.maxDuration !== undefined) await c.update("maxDuration", msg.maxDuration, vscode.ConfigurationTarget.Global);
         if (msg.silenceThreshold !== undefined) await c.update("silenceThreshold", msg.silenceThreshold, vscode.ConfigurationTarget.Global);
@@ -441,6 +445,7 @@ function buildSidebarHtml(s) {
   '<div class="key-btn" id="keyBtn"><div class="current" id="keyLabel">' + keyName + '</div>' +
   '<div class="sub">Click to change</div></div>' +
   '<div style="display:flex;gap:10px;margin-bottom:12px">' +
+    (s.isMac ? '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modCmd"' + (s.hotkeyCmd ? ' checked' : '') + ' onchange="saveMods()"> Cmd</label>' : '') +
     '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modCtrl"' + (s.hotkeyCtrl ? ' checked' : '') + ' onchange="saveMods()"> Ctrl</label>' +
     '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modAlt"' + (s.hotkeyAlt ? ' checked' : '') + ' onchange="saveMods()"> Alt</label>' +
     '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" id="modShift"' + (s.hotkeyShift ? ' checked' : '') + ' onchange="saveMods()"> Shift</label>' +
@@ -450,7 +455,7 @@ function buildSidebarHtml(s) {
 
   '<h2>Language</h2>' +
   '<select id="lang" onchange="saveSettings()">' +
-  buildOptions([["fr","Fran\u00e7ais"],["en","English"],["es","Espa\u00f1ol"],["de","Deutsch"],["it","Italiano"],["pt","Portugu\u00eas"],["nl","Nederlands"],["ja","Japanese"],["ko","Korean"],["zh","Chinese"]], s.language) +
+  [["fr","Fran\u00e7ais"],["en","English"],["es","Espa\u00f1ol"],["de","Deutsch"],["it","Italiano"],["pt","Portugu\u00eas"],["nl","Nederlands"],["ja","Japanese"],["ko","Korean"],["zh","Chinese"]].map(([v,l])=>'<option value="'+v+'"'+(v===s.language?' selected':'')+'>'+l+'</option>').join('') +
   '</select>' +
 
   '<h2>Voice Detection</h2>' +
@@ -467,7 +472,7 @@ function buildSidebarHtml(s) {
   'const vsc=acquireVsCodeApi();' +
 
   'const keyBtn=document.getElementById("keyBtn"),keyLabel=document.getElementById("keyLabel");' +
-  'keyBtn.addEventListener("click",()=>{keyBtn.classList.add("listening");keyLabel.textContent="Press any key...";vsc.postMessage({type:"captureKey"});});' +
+  'if(keyBtn){keyBtn.addEventListener("click",()=>{keyBtn.classList.add("listening");keyLabel.textContent="Press any key...";vsc.postMessage({type:"captureKey"});});}' +
 
   'window.addEventListener("message",e=>{const m=e.data;if(m.type!=="status")return;' +
   'const d=document.getElementById("dot"),t=document.getElementById("statusText"),b=document.getElementById("micBtn"),l=document.getElementById("micLabel");d.className="dot ";' +
@@ -477,13 +482,15 @@ function buildSidebarHtml(s) {
   'case"connecting":d.classList.add("off");t.textContent="Connecting...";break;' +
   'case"recording":d.classList.add("rec");t.textContent="Recording...";b.className="mic-btn rec";l.textContent="Click to stop";break;' +
   'case"processing":d.classList.add("proc");t.textContent="Transcribing...";b.className="mic-btn";l.textContent="Transcribing...";break;' +
-  'case"done":d.classList.add("on");t.textContent=(m.detail||"").substring(0,40);b.className="mic-btn";l.textContent="Press to record";break;' +
+  'case"done":d.classList.add("on");t.textContent="Done!";b.className="mic-btn";l.textContent="Press to record";break;' +
   'case"error":d.classList.add("off");t.textContent="Error";b.className="mic-btn";l.textContent="Press to record";break;' +
   'case"capturing":break;' +
   'case"key_captured":try{var kd=JSON.parse(m.detail);document.getElementById("scancode").value=kd.scancode;' +
   'document.getElementById("keyNameVal").value=kd.name;document.getElementById("keyLabel").textContent=kd.name;' +
   'document.getElementById("keyBtn").classList.remove("listening");' +
+  'var cmdEl=document.getElementById("modCmd");' +
   'vsc.postMessage({type:"saveSettings",hotkeyScancode:kd.scancode,hotkeyName:kd.name,' +
+  'hotkeyCmd:cmdEl?cmdEl.checked:false,' +
   'hotkeyCtrl:document.getElementById("modCtrl").checked,' +
   'hotkeyAlt:document.getElementById("modAlt").checked,' +
   'hotkeyShift:document.getElementById("modShift").checked});' +
@@ -492,9 +499,10 @@ function buildSidebarHtml(s) {
 
   'function toggle(){vsc.postMessage({type:"toggle"});}' +
 
-  'function saveMods(){vsc.postMessage({type:"saveSettings",' +
+  'function saveMods(){var cmdEl=document.getElementById("modCmd");vsc.postMessage({type:"saveSettings",' +
   'hotkeyScancode:parseInt(document.getElementById("scancode").value),' +
   'hotkeyName:document.getElementById("keyNameVal").value,' +
+  'hotkeyCmd:cmdEl?cmdEl.checked:false,' +
   'hotkeyCtrl:document.getElementById("modCtrl").checked,' +
   'hotkeyAlt:document.getElementById("modAlt").checked,' +
   'hotkeyShift:document.getElementById("modShift").checked});toast("Saved!");}' +
@@ -520,10 +528,6 @@ function buildSidebarHtml(s) {
   'function updST(){document.getElementById("stv").textContent=parseFloat(document.getElementById("st").value).toFixed(3);}' +
   'function toast(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1500);}' +
   '</script></body></html>';
-}
-
-function buildOptions(opts, selected) {
-  return opts.map(([v, l]) => '<option value="' + v + '"' + (v === selected ? ' selected' : '') + '>' + l + '</option>').join('');
 }
 
 function deactivate() {
